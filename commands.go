@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/mmandelstrom/pokedex_go/internal/api"
+	api "github.com/mmandelstrom/pokedex_go/internal/pokecache"
 )
 
 func commandHelp(cfg *config) func() error {
@@ -28,9 +28,13 @@ func commandExit(cfg *config) func() error {
 	}
 }
 
-func commandMap(cfg *config) func() error {
+func commandMap(cfg *config, c *api.Cache) func() error {
 	return func() error {
-		location := api.GetLocation(cfg.Next)
+		data, err := api.MakeRequest(cfg.Next, c)
+		if err != nil {
+			return fmt.Errorf("Unable to make request")
+		}
+		location := api.GetLocation(data)
 		api.PrintPokeLocation(&location)
 		cfg.Next = location.Next
 		cfg.Previous = location.Previous
@@ -38,12 +42,16 @@ func commandMap(cfg *config) func() error {
 	}
 }
 
-func commandMapB(cfg *config) func() error {
+func commandMapB(cfg *config, c *api.Cache) func() error {
 	return func() error {
 		if cfg.Previous == nil {
 			fmt.Println("you're on the first page")
 		} else {
-			location := api.GetLocation(*cfg.Previous)
+			data, err := api.MakeRequest(*cfg.Previous, c)
+			if err != nil {
+				return fmt.Errorf("Unable to make request")
+			}
+			location := api.GetLocation(data)
 			api.PrintPokeLocation(&location)
 			cfg.Next = location.Next
 			cfg.Previous = location.Previous

@@ -2,6 +2,9 @@ package main
 
 import (
 	"strings"
+	"time"
+
+	api "github.com/mmandelstrom/pokedex_go/internal/pokecache"
 )
 
 func cleanInput(text string) []string {
@@ -14,6 +17,7 @@ type config struct {
 }
 
 var cfg = config{Next: "https://pokeapi.co/api/v2/location-area?offset=0&limit=20"}
+var c = api.NewCache(7 * time.Second)
 
 func getCommands() map[string]cliCommand {
 	return map[string]cliCommand{
@@ -30,12 +34,12 @@ func getCommands() map[string]cliCommand {
 		"map": {
 			name:        "map",
 			description: "Display a list of 20 locations",
-			callback:    commandMap(&cfg),
+			callback:    commandMap(&cfg, c),
 		},
 		"mapb": {
 			name:        "mapb",
 			description: "Display a list of the 20 previous locations",
-			callback:    commandMapB(&cfg),
+			callback:    commandMapB(&cfg, c),
 		},
 	}
 }

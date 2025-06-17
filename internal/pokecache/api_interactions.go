@@ -1,10 +1,9 @@
-package api
+package pokecache
 
 import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"log"
 	"net/http"
 )
 
@@ -18,25 +17,35 @@ type pokeLocation struct {
 	} `json:"results"`
 }
 
-func GetLocation(url string) pokeLocation {
+func MakeRequest(url string, c *Cache) ([]byte, error) {
+	if entry, ok := c.Get(url); ok {
+		return entry, nil
+	}
+
 	res, err := http.Get(url)
 	if err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
 
-	body, err := io.ReadAll(res.Body)
 	defer res.Body.Close()
+	body, err := io.ReadAll(res.Body)
 
 	if res.StatusCode > 299 {
-		log.Fatalf("Response failed with status code: %d and\nbody: %s\n", res.StatusCode, body)
+		return nil, fmt.Errorf("Response failed with status code: %d and\nbody: %s\n", res.StatusCode, body)
 	}
 
 	if err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
 
+	c.Add(url, body)
+
+	return body, nil
+}
+
+func GetLocation(data []byte) pokeLocation {
 	location := pokeLocation{}
-	if err := json.Unmarshal(body, &location); err != nil {
+	if err := json.Unmarshal(data, &location); err != nil {
 		fmt.Println(err)
 	}
 
