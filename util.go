@@ -41,11 +41,16 @@ func getCommands() map[string]cliCommand {
 			description: "Display a list of the 20 previous locations",
 			callback:    commandMapB(&cfg, c),
 		},
+		"explore": {
+			name:        "explore",
+			description: "Displays pokemon in area",
+			callback:    commandExplore(c),
+		},
 	}
 }
 
 type cliCommand struct {
 	name        string
 	description string
-	callback    func() error
+	callback    func(string) error
 }

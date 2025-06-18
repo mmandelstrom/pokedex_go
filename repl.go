@@ -7,6 +7,7 @@ import (
 )
 
 func startRepl() {
+	extraParam := ""
 	reader := bufio.NewScanner(os.Stdin)
 
 	for {
@@ -23,8 +24,10 @@ func startRepl() {
 				fmt.Println("Unknown command")
 				continue
 			}
-
-			err := cmd.callback()
+			if len(words) > 1 {
+				extraParam = words[1]
+			}
+			err := cmd.callback(extraParam)
 			if err != nil {
 				fmt.Println(err)
 			}
