@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"math/rand"
 	"os"
 
 	api "github.com/mmandelstrom/pokedex_go/internal/pokecache"
@@ -66,10 +67,87 @@ func commandExplore(c *api.Cache) func(areaName string) error {
 		fullUrl := baseUrl + areaName
 		data, err := api.MakeRequest(fullUrl, c)
 		if err != nil {
-			return fmt.Errorf("Unable to make request")
+			return fmt.Errorf("unable to make request")
 		}
 		areaInfo := api.GetAreaDetails(data)
 		api.PrintPokemonInArea(&areaInfo)
+		return nil
+	}
+}
+
+func commandCatch(c *api.Cache, dex *api.Pokedex) func(pokemonName string) error {
+	return func(pokemonName string) error {
+		baseUrl := "https://pokeapi.co/api/v2/pokemon/"
+		fullUrl := baseUrl + pokemonName
+
+		data, err := api.MakeRequest(fullUrl, c)
+		if err != nil {
+			return fmt.Errorf("unable to find pokemon")
+		}
+		pokemon := api.GetPokemon(data)
+		fmt.Printf("Throwing a Pokeball at %s...\n", pokemon.Name)
+
+		throwRes := CatchPokemon(pokemon)
+		if throwRes == false {
+			fmt.Printf("%s escaped!\n", pokemon.Name)
+			return nil
+		}
+		fmt.Printf("%s was caught!\n", pokemon.Name)
+		dex.PokemonMap[pokemon.Name] = pokemon
+
+		return nil
+	}
+
+}
+
+func CatchPokemon(pokemon api.Pokemon) bool {
+	chance := 100 - (pokemon.BaseExperience / 2)
+	if chance < 5 {
+		chance = 5
+	}
+
+	roll := rand.Intn(100) + 1
+
+	return roll <= chance
+}
+
+func commandInspect(dex *api.Pokedex) func(pokemonName string) error {
+	return func(pokemonName string) error {
+		pokemon, err := dex.PokemonMap[pokemonName]
+		if !err {
+			return fmt.Errorf("%s was not found in pokedex", pokemonName)
+		}
+
+		fmt.Printf("Name: %s\n", pokemon.Name)
+		fmt.Printf("Height: %d\n", pokemon.Height)
+		fmt.Printf("Weight: %d\n", pokemon.Weight)
+		for _, stat := range pokemon.Stats {
+			fmt.Printf("  - %s: %d\n", stat.Stat.Name, stat.BaseStat)
+		}
+		fmt.Println("Types:")
+		for _, pokeType := range pokemon.Types {
+			fmt.Printf("  - %s\n", pokeType.Type.Name)
+		}
+
+		return nil
+	}
+}
+
+func commandPokedex() func(param string) error {
+	if pokeDex.PokemonMap == nil {
+		println("Your pokedex is empty")
+		return nil
+	}
+
+	return func(param string) error {
+		if len(pokeDex.PokemonMap) == 0 {
+			fmt.Println("Your pokedex is empty")
+			return nil
+		}
+		fmt.Println("Your pokedex:")
+		for _, pokemon := range pokeDex.PokemonMap {
+			fmt.Printf("- %s\n", pokemon.Name)
+		}
 		return nil
 	}
 }

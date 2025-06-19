@@ -8,7 +8,7 @@ import (
 )
 
 func cleanInput(text string) []string {
-	return strings.Fields(strings.ToLower(text)) //Converts input string to slice of lowercase words
+	return strings.Fields(strings.ToLower(text))
 }
 
 type config struct {
@@ -18,6 +18,9 @@ type config struct {
 
 var cfg = config{Next: "https://pokeapi.co/api/v2/location-area?offset=0&limit=20"}
 var c = api.NewCache(7 * time.Second)
+var pokeDex = api.Pokedex{
+	PokemonMap: make(map[string]api.Pokemon),
+}
 
 func getCommands() map[string]cliCommand {
 	return map[string]cliCommand{
@@ -45,6 +48,21 @@ func getCommands() map[string]cliCommand {
 			name:        "explore",
 			description: "Displays pokemon in area",
 			callback:    commandExplore(c),
+		},
+		"catch": {
+			name:        "catch",
+			description: "attempt to catch a pokemon",
+			callback:    commandCatch(c, &pokeDex),
+		},
+		"inspect": {
+			name:        "inspect",
+			description: "inspect a pokemon in pokedex",
+			callback:    commandInspect(&pokeDex),
+		},
+		"pokedex": {
+			name:        "pokedex",
+			description: "displays all pokemon in dex",
+			callback:    commandPokedex(),
 		},
 	}
 }
